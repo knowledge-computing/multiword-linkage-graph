@@ -1,1 +1,11 @@
-# multiword-linkage-graph
+# Multiword Linkage Graph
+This repository contains code and experimental results for linking given single-word text labels from historical maps that enable search for multiword place names (i.e. names with more than one word such as "United States of America" or "North Dakota") on the map. We represent these linkages as sparse graphs, where the vertices of the graph are text labels which each consist of a single word and a bounding polygon of where the word appears on the historical map, and the edges of the graph represent that two text labels are likely next to each other in a multiword phrase. In our method to construct these graphs, we construct minimum spanning trees based on an edge cost heuristic that aim to minimize differences in location, text height, angle, and capitalization among linked text labels. We also implement baseline methods, one of which constructs minimum spanning trees using a learned Mahalanobis metric to compute edge costs, and the other simply links any pair of text labels that are within a distance of two characters of each other. We describe these methods further in our paper [Olson et al, 2024](#1).
+## Annotated Text Label Data
+Our data for these experiments is from the ICDAR 2024 Map Text Competition [Li et al, 2024](#2). The train and validation splits are open source; you can download them [here](https://zenodo.org/records/11516933). To inquire about the test split, which was used in our experimental results from the paper, contact [Yijun Lin](lin00786@umn.edu).
+## Getting Started
+To get started using this repository, please refer to the Jupyter notebook __linkage_graph_demo.ipynb__. To run this notebook, you will need to have a jupyter environment for python 3.8 or newer.
+## References
+
+1. Olson, R., Kim, J., and Chiang, Y. Y. (2024). Automatic Search of Multiword Place Names on Historical Maps. In 3rd ACM SIGSPATIAL International Workshop on Searching and Mining Large Collections of Geospatial Data. Accepted, to appear.
+2. Li, Z. et al. (2024). ICDAR 2024 Competition on Historical Map Text Detection, Recognition, and Linking. In: Barney Smith, E.H., Liwicki, M., Peng, L. (eds) Document Analysis and Recognition - ICDAR 2024. ICDAR 2024. Lecture Notes in Computer Science, vol 14809. Springer, Cham. https://doi.org/10.1007/978-3-031-70552-6_22
+

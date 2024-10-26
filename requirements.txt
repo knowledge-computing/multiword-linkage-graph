@@ -1,0 +1,6 @@
+matplotlib==3.7.5
+metric_learn==0.7.0
+nltk==3.9.1
+numpy==1.24.4
+pandas==2.0.3
+scikit_learn==1.2.2

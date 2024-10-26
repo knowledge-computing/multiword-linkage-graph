@@ -1,0 +1,6 @@
+/character_distance_threshold_results
+/cross_validation_images
+/cross_validation_mahalanobis_results
+__pycache__/
+*.pyc
+*.pyo
