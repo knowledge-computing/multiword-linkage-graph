@@ -66,7 +66,7 @@ if __name__ == "__main__":
             test_enough_multiword_phrases.append(map_annotation["image"])
     print(len(test_enough_multiword_phrases))
     """ print("computing training data")
-    df = load_all_maps_into_df("icdar24-train-png/annotations.json", enough_multiword_phrases)
+    df = load_all_maps_into_df("rumsey_train.json", enough_multiword_phrases)
     print(df)
     df.to_csv("filtered_train_label_pair_attributes.csv", index=False)
     print("computing val data")

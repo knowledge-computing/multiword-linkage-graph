@@ -3,7 +3,7 @@ from map_graph import FeatureNode
 import numpy as np
 import matplotlib.pyplot as plt
 
-def analyze_height_similarity_among_linked_text(data_filepath = "icdar24-train-png/annotations.json"):
+def analyze_height_similarity_among_linked_text(data_filepath = "rumsey_train.json"):
     with open(data_filepath, "r") as f:
         all_data = json.load(f)
         height_ratios_per_group = []
@@ -34,7 +34,7 @@ def analyze_height_similarity_among_linked_text(data_filepath = "icdar24-train-p
         # Display the plot
         plt.show()
 
-def analyze_angle_similarity_among_linked_text(data_filepath = "icdar24-train-png/annotations.json"):
+def analyze_angle_similarity_among_linked_text(data_filepath = "rumsey_train.json"):
     with open(data_filepath, "r") as f:
         all_data = json.load(f)
         sin_angle_dif_per_group = []
@@ -62,7 +62,7 @@ def analyze_angle_similarity_among_linked_text(data_filepath = "icdar24-train-pn
 
         # Display the plot
         plt.show()
-def analyze_distance_similarity_among_linked_text(data_filepath = "icdar24-train-png/annotations.json"):
+def analyze_distance_similarity_among_linked_text(data_filepath = "rumsey_train.json"):
     with open(data_filepath, "r") as f:
         all_data = json.load(f)
         average_distance_per_group = []

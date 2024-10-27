@@ -31,7 +31,7 @@ class FeatureNode:
         """Consider two FeatureNodes (i.e. text labels) identical if they have the same text and vertices
         does not override the built-in __eq__ method in order to allow objects to be hashed normally"""
         return (self.text == other.text) and (self.vertices ==  other.vertices)
-    def get_ground_truth_linkages(map_filename, annotations_filepath = "icdar24-train-png/annotations.json"):
+    def get_ground_truth_linkages(map_filename, annotations_filepath = "rumsey_train.json"):
         """Purpose: create a list of FeatureNodes containing the linkages contained in the ground truth file
         Parameters: map_filename, a string filename of the map image to retrieve the ground truth phrases for
             annotations_filepath, a string of the json file containing the ground truth labels and linkages.
@@ -298,7 +298,7 @@ def connect_with_rf_classifier(nodes_list, rf_classifer):
                     node.neighbors.add(other_node)
                     other_node.neighbors.add(node) 
 class MapGraph:
-    def __init__(self, map_filename = None, connecting_function = None, annotations_filepath = "icdar24-train-png/annotations.json"):
+    def __init__(self, map_filename = None, connecting_function = None, annotations_filepath = "rumsey_train.json"):
         # to draw the edges for the graph included in the annotated data, set connecting_function parameter to "annotations"
         self.nodes = []
         if map_filename != None:
@@ -340,8 +340,3 @@ class MapGraph:
             if node.equals(graph_node):
                 return True
         return False
-
-if __name__ == "__main__":
-    #print("\n".join([" ".join([label.text for label in phrase]) for phrase in FeatureNode.get_ground_truth_linkages("5797073_h2_w9.png")]))
-    mg = MapGraph("5797073_h2_w9.png", distance_threshold_graph)
-    print(mg)

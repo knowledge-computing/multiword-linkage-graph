@@ -100,37 +100,3 @@ def find_mahalanobis_metric(data_filepath):
     mmc.fit(pairs, y)
     print(mmc.get_mahalanobis_matrix())
     return mmc
-    
-
-
-
-
-
-if __name__ == "__main__":
-    # first part
-    """ df = load_data_from_csv()
-    print(random_forest_regressor(df))
-    plot_weight_against_recall_data(df, "a")
-    plot_weight_against_recall_data(df, "b")
-    plot_weight_against_recall_data(df, "c") """
-    """
-    Results so far: Mean Squared Error: 2.6972549635648344e-07
-    1       b    0.493497
-    0       a    0.293017
-    2       c    0.213487
-    a                   1.760000
-    b                   0.880000
-    c                   0.880000
-    predicted_recall    0.837945
-    """
-    #second part
-    lr_classifier = label_linking_logistic_regression(load_pairwise_label_data("filtered_train_label_pair_attributes.csv"))
-    predict_connections_with_classifier(lr_classifier, load_pairwise_label_data("filtered_val_label_pair_attributes.csv"))
-    print(lr_classifier.coef_)
-    convex_weights = find_mahalanobis_metric("filtered_val_label_pair_attributes.csv")
-    """
-    The optimal value is: 1.720877714005484e-06
-    The optimal x is: [[ 1.11313482e-12  3.13458326e-13  1.24207785e-12  6.15977615e-05]
-    [ 3.13458326e-13 -1.20164867e-14  3.01346467e-14  2.33032980e-13]
-    [ 1.24207785e-12  3.01346467e-14  3.98830366e-15  2.95402825e-12]
-    [ 6.15977615e-05  2.33032980e-13  2.95402825e-12  1.28687769e-14]]"""

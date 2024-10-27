@@ -12,9 +12,9 @@ CORRECTLY_LINKED_COLOR = (0, 255, 0)
 INCORRECTLY_LINKED_COLOR = (0, 0, 255)
 SINGLE_WORD_COLOR = (255, 0, 0)
 
-def draw_features_and_linkages(map_filename, map_graph, destination_filename = None, show_image = False, map_dir = "icdar24-train-png/train_images"):
+def draw_features_and_linkages(map_filename, map_graph, destination_filename = None, show_image = False, map_dir = "rumsey/train/"):
     # Read an image
-    image = cv2.imread(map_dir + "/" +  map_filename)
+    image = cv2.imread(map_dir + "/" + map_filename)
     annotated_phrases = FeatureNode.get_ground_truth_linkages(map_filename)
     correctly_linked_nodes = set()
     incorrectly_linked_nodes = set()
@@ -113,6 +113,7 @@ def draw_features_and_linkages(map_filename, map_graph, destination_filename = N
     # Display the result
     if destination_filename:
         path = "scripts/annotated_linkage_visualizations/" + destination_filename
+        os.makedirs("scripts/annotated_linkage_visualizations/", exist_ok=True)
         cv2.imwrite(path, image)
     if show_image:
         cv2.imshow('Linkage Visualization', image)
