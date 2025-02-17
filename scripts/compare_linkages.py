@@ -33,6 +33,7 @@ def compare_linkages(map_filename, annotations_filepath = "rumsey_train.json", l
     incorrectly_linked_phrases = []
     single_word_phrases = []
     number_correct_edges = 0
+    number_necessary_edges = 0
     for annotated_phrase in ground_truth:
         if len(annotated_phrase) > 1:
             found = list_multiword_paths.search_node_sequence_in_graph(linkages.nodes, annotated_phrase)
@@ -41,6 +42,7 @@ def compare_linkages(map_filename, annotations_filepath = "rumsey_train.json", l
             else:
                 correctly_linked_phrases.append(list_multiword_paths.express_node_sequence_as_phrase(annotated_phrase))
                 number_correct_edges += len(annotated_phrase) - 1
+            number_necessary_edges += len(annotated_phrase) - 1
         else:
             single_word_phrases.append(annotated_phrase)
     results = {"image":map_filename, "results":
@@ -50,7 +52,8 @@ def compare_linkages(map_filename, annotations_filepath = "rumsey_train.json", l
                         "number_correctly_linked": len(correctly_linked_phrases),
                         "number_connections_missed": len(ground_truth) - len(correctly_linked_phrases) - len(single_word_phrases),
                         "total_number_edges": linkages.count_edges(),
-                        "number_correct_edges": number_correct_edges
+                        "number_correct_edges": number_correct_edges,
+                        "number_necessary_edges":number_necessary_edges
 
                     }
                }
@@ -74,6 +77,7 @@ def get_stats_from_results_file(results_filename, annotations_filepath = "rumsey
         false_linkages = []
         sum_correct_edge_count = 0
         sum_edge_count = 0
+        sum_necessary_edge_count = 0
         for map_result in results_dict["map_results"]:
             # "number_correctly_linked": 3, "number_connections_missed": 125, "number_incorrectly_linked": 401}
             #true_linkages.append(map_result["results"]["number_correctly_linked"])
@@ -93,8 +97,10 @@ def get_stats_from_results_file(results_filename, annotations_filepath = "rumsey
             if "total_number_edges" in map_result["results"]:
                 sum_edge_count += map_result["results"]["total_number_edges"]
             else:
-                sum_edge_count += len(multiword_name_extraction.list_all_word_labels(multiword_name_extraction.extract_map_data_from_all_annotations(map_result["image"], annotations_filepath))) - 1  
+                sum_edge_count += len(multiword_name_extraction.list_all_word_labels(multiword_name_extraction.extract_map_data_from_all_annotations(map_result["image"], annotations_filepath))) - 1
+              
             sum_correct_edge_count += correct_edge_count
+            sum_necessary_edge_count += map_result["results"]["number_necessary_edges"]
             true_linkages.append(num_correctly_linked)
             #false_linkages.append(map_result["results"]["number_incorrectly_linked"])
             missed_linkages.append(map_result["results"]["number_connections_missed"])
@@ -105,4 +111,6 @@ def get_stats_from_results_file(results_filename, annotations_filepath = "rumsey
         print("best recall on map", max(recall_per_map), "\nworst recall on map", min(recall_per_map))
         #print("best precision on map", max(precision_per_map), "\nworst precision on map", min(precision_per_map))
         print("precision of edges: ", sum_correct_edge_count / sum_edge_count)
+        print("recall of edges: ", sum_correct_edge_count / sum_necessary_edge_count)
+        print("F1 score of edges: ", (sum_correct_edge_count) / ((sum_edge_count + sum_necessary_edge_count) / 2))
     return (np.mean(recall_per_map))

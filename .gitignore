@@ -8,3 +8,4 @@ __pycache__/
 /rumsey
 /rumsey_train.json
 /rumsey_val.json
+*.json

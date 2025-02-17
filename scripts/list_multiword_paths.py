@@ -58,6 +58,12 @@ def list_all_multiword_paths(map_graph, depth_limit = 1):
         for node in map_graph.nodes:
             paths += search_from_node(node, depth)
     return paths
+def list_all_multiword_and_single_word_paths(map_graph, depth_limit = 1):
+    paths = []
+    for depth in range(1, depth_limit + 1):
+        for node in map_graph.nodes:
+            paths += search_from_node(node, depth)
+    return paths
 
 if __name__ == "__main__":
     mg = map_graph.MapGraph("0068010_h2_w7.png")
