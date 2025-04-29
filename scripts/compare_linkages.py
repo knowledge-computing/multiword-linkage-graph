@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.pardir)
 import list_multiword_paths
 import multiword_name_extraction
-from map_graph import FeatureNode, prims_mst, half_prims_mst, distance_threshold_graph, MapGraph
+from map_graph import FeatureNode, prims_mst, half_prims_mst, distance_threshold_graph, MapGraph, edge_cut
 import json
 import os
 import numpy as np
@@ -19,10 +19,13 @@ class LinkageMethod:
             self.connection_function(map_graph.nodes, self.distance_function)
         else:
             self.connection_function(map_graph.nodes, self.weights, self.distance_function)
-    def __init__(self, connection_function, distance_function, weights = None):
+        if self.cut_edges:
+            edge_cut(map_graph.nodes, self.distance_function)
+    def __init__(self, connection_function, distance_function, weights = None, cut_edges = False):
         self.connection_function = connection_function
         self.distance_function = distance_function
-        self.weights = weights 
+        self.weights = weights
+        self.cut_edges = cut_edges
 
 
 def compare_linkages(map_filename, annotations_filepath = "rumsey_train.json", linkage_method = LinkageMethod(prims_mst, FeatureNode.distance)):

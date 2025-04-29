@@ -16,6 +16,7 @@ PADDING_RATIO = 1
         
 class FeatureNode:
     def __init__(self, feature_obj):
+        self.feature_json = feature_obj
         self.vertices = feature_obj["vertices"]
         self.text = feature_obj["text"]
         self.minimum_bounding_box = coordinate_geometry.convex_hull_min_area_rect(self.vertices)
@@ -181,7 +182,7 @@ class EdgeCostFunction:
             self.c = weights[2]
         def __call__(self, label1, label2):
             edge_cost =  FeatureNode.distance(label1, label2) * (FeatureNode.height_ratio(label1, label2) ** self.a) 
-            edge_cost *= (1 + self.b * FeatureNode.distance) * (1 + self.c * FeatureNode.capitalization_difference(label1, label2))
+            edge_cost *= (1 + self.b * FeatureNode.distance(label1, label2)) * (1 + self.c * FeatureNode.capitalization_difference(label1, label2))
             return edge_cost
 class LogisticRegressionEdgeCost:
     def __init__(self, lr_model):
@@ -220,13 +221,91 @@ def prims_mst(nodes_list, distance_func = FeatureNode.EdgeCostFunction([1, 1, 1]
         if node["parent"] != None:
             node["vertex"].neighbors.add(node["parent"]["vertex"])
             node["parent"]["vertex"].neighbors.add(node["vertex"])
+def edge_cut(nodes_list, edge_cost_func = FeatureNode.EdgeCostFunction([1, 1, 1])):
+    """
+    Purpose: Cut edges from a graph to ensure that each label has degree of at most 2.
+    This ensures that every word is considered to be part of at most 1 multi-word phrase.
+    Parameters: nodes_list - a list of FeatureNodes linked into a map graph, edge_cost_func -
+    a function that takes in two FeatureNodes and measures the (non-negative) edge cost of including them in the graph.
+    edge_cut will remove edges that have the highest edge cost until all nodes have at most two edges."""
+    nodes_with_more_than_two_edges = {}
+    for node in nodes_list:
+        if len(node.neighbors) > 2:
+            node_edges_list = [(edge_cost_func(node, other_node), other_node) for other_node in node.neighbors]
+            nodes_with_more_than_two_edges[node] = node_edges_list
+    while len(nodes_with_more_than_two_edges.keys()) > 0:
+        # find and delete the highest weight edge connected to a node with more than two neighbors.
+        max_weight = 0
+        edge_to_cut = None
+        for node, edge_list in nodes_with_more_than_two_edges.items():
+            for edge in edge_list:
+                if edge[0] > max_weight:
+                    max_weight = edge[0]
+                    edge_to_cut = (node, edge[1])
+        # cut the edge
+        edge_to_cut[0].neighbors.remove(edge_to_cut[1])
+        edge_to_cut[1].neighbors.remove(edge_to_cut[0])
+        # update the dictionary of nodes with more than two edges
+        if len(edge_to_cut[0].neighbors) <= 2:
+            nodes_with_more_than_two_edges.pop(edge_to_cut[0], None)
+        else:
+            nodes_with_more_than_two_edges[edge_to_cut[0]] = [(edge_cost_func(edge_to_cut[0], other_node), other_node) for other_node in edge_to_cut[0].neighbors]
+        if len(edge_to_cut[1].neighbors) <= 2:
+            nodes_with_more_than_two_edges.pop(edge_to_cut[1], None)
+        else:
+            nodes_with_more_than_two_edges[edge_to_cut[1]] = [(edge_cost_func(edge_to_cut[1], other_node), other_node) for other_node in edge_to_cut[1].neighbors]
 
-def distance_threshold_graph(nodes_list, distance_func = FeatureNode.distance):
+def cut_cycles(nodes_list, edge_cost_func = FeatureNode.EdgeCostFunction([1, 1, 1])):
+    """
+    Purpose: Identify cycles in the graph and cut edges in the graph to remove the highest-weighted edge
+    in each cycle.
+    Parameters: nodes list - a list of FeatureNodes to remove cycles from, edge_cost_func - a function that
+    takes two FeatureNode objects and outputs a numerical weight for an edge connecting them."""
+    def dfs(node, parent, visited, cycle_edges):
+        visited[node] = True
+        for neighbor in node.neighbors:
+            if not visited[neighbor]:
+                if dfs(neighbor, node, visited, cycle_edges):
+                    return True
+            elif neighbor != parent:  # Found a cycle
+                cycle_edges.append((node, neighbor))
+                return True
+        return False
+    def cut_edge_causing_cycle(nodes_list, edge_cost_func):
+        visited = {node: False for node in nodes_list}
+        cycle_edges = []
+
+        for node in nodes_list:
+            if not visited[node]:
+                if dfs(node, -1, visited, cycle_edges):
+                    break
+        # cut the highest-weighted edge in the cycle
+        max_weight = -float("inf")
+        max_weight_edge = None
+        for edge in cycle_edges:
+            cur_weight = edge_cost_func(edge[0], edge[1])
+            if cur_weight > max_weight:
+                max_weight = cur_weight
+                max_weight_edge = edge
+        if max_weight_edge != None:
+            max_weight_edge[0].neighbors.remove(max_weight_edge[1])
+            max_weight_edge[1].neighbors.remove(max_weight_edge[0])
+            return True
+        return False
+    counter = 0
+    while cut_edge_causing_cycle(nodes_list, edge_cost_func):
+        counter += 1
+    
+
+
+
+def distance_threshold_graph(nodes_list, distance_func = FeatureNode.EdgeCostFunction([0, 0, 0])):
     visited_nodes = set()
     for node in nodes_list:
         visited_nodes.add(node)
         word_length = max(node.minimum_bounding_box[1])
-        distance_threshold = 2 * word_length / len(node.text)
+        # gave denominator max of 1 to prevent division by zero errors.
+        distance_threshold = 2 * word_length / max(1, len(node.text))
         for other_node in nodes_list:
             if other_node not in visited_nodes and distance_func(node, other_node) <= distance_threshold:
                 node.neighbors.add(other_node)
@@ -301,6 +380,7 @@ class MapGraph:
     def __init__(self, map_filename = None, connecting_function = None, annotations_filepath = "rumsey_train.json"):
         # to draw the edges for the graph included in the annotated data, set connecting_function parameter to "annotations"
         self.nodes = []
+        self.map_filename = map_filename
         if map_filename != None:
             map_data = extract_map_data_from_all_annotations(map_filename, annotations_filepath)
             for group in map_data["groups"]:
@@ -340,3 +420,58 @@ class MapGraph:
             if node.equals(graph_node):
                 return True
         return False
+    def sort_by_geometry(self):
+        self.nodes.sort(key=lambda x : x.minimum_bounding_box[0][1])
+        self.nodes.sort(key=lambda x : x.minimum_bounding_box[0][0])
+    def to_json(self):
+        """
+        Purpose: Converts the map graph into a json object in the format used in the ICDAR Map Text Competition.
+        IMPORTANT: this method only works for graphs where none of the nodes have a degree higher than 3.
+        Otherwise, some word(s) will be considered to be part of multiple different phrases, which does not
+        match with the competition format."""
+        # sort by y coordinate and then 
+        self.sort_by_geometry()
+        json_representation = {"image":self.map_filename, "groups":[]}
+        remaining_nodes = self.nodes[:]
+        words_in_json = 0
+        while len(remaining_nodes) > 0:
+            # find the first word that is not an interior word of a phrase
+            index = 0
+            while index < len(remaining_nodes) and len(remaining_nodes[index].neighbors) >= 2:
+                index += 1
+            current_group = [remaining_nodes[index].feature_json]
+            # remove the element added to the group
+            starting_node = remaining_nodes.pop(index)
+            # if the element had no neighbors, move on to the next iteration
+            # otherwise, keep adding connected elements to its group
+            if len(starting_node.neighbors) == 1:
+                # add the first neighbor to the group and find the neighbor's other neighbors
+                current_neighbor = list(starting_node.neighbors)[0]
+                current_group.append(current_neighbor.feature_json)
+                neighbors_list = copy.copy(current_neighbor.neighbors)
+                remaining_nodes.remove(current_neighbor)
+                neighbors_list.remove(starting_node)
+                while len(neighbors_list) >= 1:
+                    prev_neighbor = current_neighbor
+                    current_neighbor = list(neighbors_list)[0]
+                    current_group.append(current_neighbor.feature_json)
+                    neighbors_list = copy.copy(current_neighbor.neighbors)
+                    remaining_nodes.remove(current_neighbor)
+                    neighbors_list.remove(prev_neighbor)
+            json_representation["groups"].append(current_group)
+            words_in_json += len(current_group)
+        #print(words_in_json)
+        return json_representation
+if __name__ == "__main__":
+    mg = MapGraph("rumsey/test/3081001_h6_w18.png", prims_mst, "test_annotations.json")
+    edge_cut(mg.nodes)
+    mg.to_json()
+
+
+
+
+
+            
+
+        
+

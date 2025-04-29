@@ -9,3 +9,4 @@ __pycache__/
 /rumsey_train.json
 /rumsey_val.json
 *.json
+*.zip
